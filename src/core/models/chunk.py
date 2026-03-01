@@ -14,6 +14,8 @@ class ChunkMetadata(BaseModel):
 
     heading_path: list[str] | None = Field(default=None, description="The heading path for the chunk, if any")
     block_id: str | None = Field(default=None, description="The block ID for the chunk, if any")
+    parent_chunk_id: str | None = Field(default=None, description="The ID of the parent chunk, if this chunk is a child chunk")      
+    chunk_type: str = Field(default="child", description="The type of chunk 'parent' or 'child'")               
 
     @property
     def heading_string(self) -> str:
