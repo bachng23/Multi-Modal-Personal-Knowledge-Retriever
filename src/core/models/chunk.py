@@ -41,5 +41,15 @@ class Chunk(BaseModel):
         """Stable ID from document identity + chunk index."""
         
         return stable_hashing(f"{document_id}:{chunk_index}")
-                                 
-    
+
+
+class ChunkSearchResult(BaseModel):
+    """Result from a vector similarity search."""
+
+    chunk_id: str
+    document_id: str
+    content: str
+    score: float
+    parent_chunk_id: str | None = None
+    heading_path: list[str] | None = None
+    block_id: str | None = None
