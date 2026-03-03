@@ -42,3 +42,7 @@ LLM_MODEL = os.getenv("LLM_MODEL", "openai/gpt-4o-mini")
 
 # --- Indexing ---
 CHUNKER_VERSION = "v1.0"
+
+# --- Obsidian Vault ---
+VAULT_PATH = Path(os.getenv("VAULT_PATH", ""))
+EXCLUDED_DIRS: set[str] = {"templates", "attachments", "archive", "img"}
