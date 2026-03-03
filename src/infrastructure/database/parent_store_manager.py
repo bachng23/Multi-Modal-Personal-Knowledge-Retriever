@@ -173,6 +173,8 @@ class ParentStoreManager:
         chunker_version: str,
         embed_model: str,
     ) -> bool:
+        """Check if the document needs re-indexing based on its index state."""
+        
         state = self.get_index_state(document_id)
         if state is None:
             return True

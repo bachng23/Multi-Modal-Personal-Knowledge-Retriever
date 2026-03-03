@@ -42,6 +42,7 @@ LLM_MODEL = os.getenv("LLM_MODEL", "openai/gpt-4o-mini")
 
 # --- Indexing ---
 CHUNKER_VERSION = "v1.0"
+INDEX_CONCURRENCY = int(os.getenv("INDEX_CONCURRENCY", "10"))
 
 # --- Obsidian Vault ---
 VAULT_PATH = Path(os.getenv("VAULT_PATH", ""))

@@ -48,10 +48,6 @@ class VaultScanner:
         )
         return documents
 
-    # ------------------------------------------------------------------
-    # Internals
-    # ------------------------------------------------------------------
-
     def _is_excluded(self, file_path: Path) -> bool:
         """Return True if any part of the path matches an excluded dir
         or starts with '.' (hidden directories)."""
