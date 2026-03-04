@@ -44,6 +44,9 @@ LLM_MODEL = os.getenv("LLM_MODEL", "openai/gpt-4o-mini")
 CHUNKER_VERSION = "v1.0"
 INDEX_CONCURRENCY = int(os.getenv("INDEX_CONCURRENCY", "10"))
 
+# --- Retrieval ---
+RETRIEVAL_TOP_K = int(os.getenv("RETRIEVAL_TOP_K", "5"))
+
 # --- Obsidian Vault ---
 VAULT_PATH = Path(os.getenv("VAULT_PATH", ""))
 EXCLUDED_DIRS: set[str] = {"templates", "attachments", "archive", "img"}

@@ -86,7 +86,8 @@ class ParentStoreManager:
         return self._row_to_chunk(row)
 
     def get_parents_batch(self, chunk_ids: list[str]) -> list[Chunk]:
-        """Lấy nhiều parent chunks trong 1 query. Dùng cho retrieval pipeline.
+        """
+        Lấy nhiều parent chunks trong 1 query. Dùng cho retrieval pipeline.
 
         Search trả về N child chunks → N parent_chunk_ids → gọi hàm này 1 lần.
         Tránh N+1 query problem khi gọi get_parent() trong vòng lặp.
@@ -155,6 +156,17 @@ class ParentStoreManager:
         ).fetchall()
         return [self._row_to_index_state(r) for r in rows]
         
+    def get_index_state_by_path(self, source_path: str) -> IndexState | None:
+        """Lookup index state by source_path using the existing SQL index.
+        Much faster than loading all states when the vault is large."""
+        row = self._conn.execute(
+            "SELECT * FROM index_state WHERE source_path = ?",
+            (source_path,),
+        ).fetchone()
+        if row is None:
+            return None
+        return self._row_to_index_state(row)
+
     def get_all_index_states(self) -> list[IndexState]:
         rows = self._conn.execute("SELECT * FROM index_state").fetchall()
         return [self._row_to_index_state(r) for r in rows]
@@ -174,7 +186,7 @@ class ParentStoreManager:
         embed_model: str,
     ) -> bool:
         """Check if the document needs re-indexing based on its index state."""
-        
+
         state = self.get_index_state(document_id)
         if state is None:
             return True

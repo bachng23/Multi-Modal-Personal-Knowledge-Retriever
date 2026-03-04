@@ -34,7 +34,7 @@ class IndexStats:
         )
 
 
-class IndexingPipeline:
+class IndexingService:
     """Orchestrates the full indexing flow for an Obsidian vault.
 
     Flow for each document:
