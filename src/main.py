@@ -22,6 +22,7 @@ from loguru import logger
 
 from src.agents.graph import builder
 from src.agents.memory import create_memory_checkpointer
+from src.core.config import config as app_config
 
 ORANGE = "\033[38;5;208m"
 GREEN = "\033[92m"
@@ -86,9 +87,23 @@ def _show_status(text: str):
     sys.stdout.flush()
 
 
+_TOOL_LABELS = {
+    "search_knowledge": "Searching your vault...",
+    "web_search": "Searching the web...",
+    "reindex_vault": "Reindexing vault...",
+    "get_vault_status": "Checking vault status...",
+    "get_document_info": "Looking up document info...",
+}
+
+
+def _tool_label(tool_name: str) -> str:
+    return _TOOL_LABELS.get(tool_name, f"Using {tool_name}...")
+
+
 async def stream_turn(agent, input_data, config):
     """Stream one agent turn. Handles tool execution and interrupts."""
     printed_header = False
+    started_text = False
     summarizing = False
     needs_separator = False
     active_tools: set[str] = set()
@@ -113,6 +128,12 @@ async def stream_turn(agent, input_data, config):
                     continue
                 chunk = event["data"]["chunk"]
                 if chunk.content and not getattr(chunk, "tool_call_chunks", None):
+                    text = chunk.content
+                    if not started_text:
+                        text = text.lstrip("\n")
+                        if not text:
+                            continue
+                        started_text = True
                     if not printed_header:
                         _clear_status()
                         sys.stdout.write(f"\n{ORANGE}{BOLD}JAN ▸{RESET} ")
@@ -121,24 +142,31 @@ async def stream_turn(agent, input_data, config):
                     elif needs_separator:
                         sys.stdout.write("\n\n")
                         sys.stdout.flush()
+                        started_text = False
+                        text = text.lstrip("\n")
+                        if not text:
+                            needs_separator = False
+                            continue
+                        started_text = True
                     needs_separator = False
-                    sys.stdout.write(chunk.content)
+                    sys.stdout.write(text)
                     sys.stdout.flush()
 
             elif kind == "on_tool_start":
                 tool_name = event.get("name", "tool")
                 active_tools.add(tool_name)
+                label = _tool_label(tool_name)
                 if printed_header:
                     needs_separator = True
-                else:
-                    _show_status(f"Using {tool_name}...")
+                    started_text = False
+                _clear_status()
+                print(f"  {DIM}🔍 {label}{RESET}")
+                _show_status("Working...")
 
             elif kind == "on_tool_end":
                 tool_name = event.get("name", "tool")
                 active_tools.discard(tool_name)
-                if not printed_header and active_tools:
-                    _show_status(f"Using {next(iter(active_tools))}...")
-                elif not printed_header:
+                if not printed_header:
                     _show_status("Generating response...")
 
     except Exception as e:
@@ -215,6 +243,34 @@ async def chat_loop(agent, thread_id: str):
         )
 
 
+async def _auto_index_if_needed():
+    """Run indexing automatically on first launch when the vault is not yet indexed."""
+    from src.infrastructure.database.parent_store_manager import ParentStoreManager
+
+    db_path = app_config.SQLITE_DB_PATH
+    if not db_path.exists():
+        needs_index = True
+    else:
+        store = ParentStoreManager(db_path=db_path)
+        all_states = store.get_all_index_states()
+        needs_index = len(all_states) == 0
+
+    if not needs_index:
+        return
+
+    print(f"  {ORANGE}{BOLD}First run detected — indexing your vault{RESET}")
+    print(f"  {DIM}This only happens once and may take a few minutes...{RESET}\n")
+
+    from src.services.indexing import IndexingService
+
+    indexing_service = IndexingService()
+    stats = await indexing_service.run()
+
+    print(f"  {GREEN}✓{RESET} Indexing complete: "
+          f"{stats.indexed} indexed, {stats.skipped} skipped, "
+          f"{stats.failed} failed ({stats.total} total)\n")
+
+
 def main():
     os.system("cls" if os.name == "nt" else "clear")
 
@@ -229,6 +285,7 @@ def main():
     thread_id = args.thread or str(uuid.uuid4())[:8]
 
     async def _run():
+        await _auto_index_if_needed()
         agent = await build_agent()
         try:
             await chat_loop(agent, thread_id)
