@@ -7,7 +7,7 @@ Built with **LangGraph** + **Qdrant** + **OpenRouter**.
 ## Quick Start
 
 ```bash
-git clone https://github.com/<your-username>/Multi-Modal-Personal-Knowledge-Retriever.git
+git clone https://github.com/bachng23/Multi-Modal-Personal-Knowledge-Retriever.git
 cd Multi-Modal-Personal-Knowledge-Retriever
 ./start.sh
 ```
