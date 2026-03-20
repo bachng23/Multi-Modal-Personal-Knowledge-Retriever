@@ -12,6 +12,13 @@ cd Multi-Modal-Personal-Knowledge-Retriever
 ./start.sh
 ```
 
+Or with [uv](https://github.com/astral-sh/uv) (Docker / Qdrant / `.env` you still set up yourself):
+
+```bash
+uv sync
+uv run jan
+```
+
 That's it. The script will:
 
 1. Create a Python virtual environment
